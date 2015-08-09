@@ -66,6 +66,10 @@ class network {
 #   $dns2          - optional
 #   $domain        - optional
 #   $bridge        - optional
+#   $hotplug       - optional
+#   $devicetype    - optional
+#   $type          - optional
+#   $ovs_bridge    - optional
 #
 # === Actions:
 #
@@ -96,7 +100,7 @@ define network_if_base (
   $ensure,
   $ipaddress,
   $netmask,
-  $macaddress,
+  $macaddress = undef,
   $gateway = undef,
   $ipv6address = undef,
   $ipv6gateway = undef,
@@ -115,7 +119,11 @@ define network_if_base (
   $dns2 = undef,
   $domain = undef,
   $bridge = undef,
-  $linkdelay = undef
+  $linkdelay = undef,
+  $hotplug = undef,
+  $devicetype = undef,
+  $type = undef,
+  $ovs_bridge = undef
 ) {
   # Validate our booleans
   validate_bool($userctl)
@@ -124,6 +132,7 @@ define network_if_base (
   validate_bool($ipv6init)
   validate_bool($ipv6autoconf)
   validate_bool($ipv6peerdns)
+  validate_bool($hotplug)
   # Validate our regular expressions
   $states = [ '^up$', '^down$' ]
   validate_re($ensure, $states, '$ensure must be either "up" or "down".')

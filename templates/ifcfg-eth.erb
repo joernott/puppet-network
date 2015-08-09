@@ -1,12 +1,15 @@
 ###
 ### File managed by Puppet
 ###
+NAME=<%= @interface %>
 DEVICE=<%= @interface %>
 BOOTPROTO=<%= @bootproto %>
 <% if @macaddress %>HWADDR=<%= @macaddress %>
 <% end -%>
 ONBOOT=<%= @onboot %>
-HOTPLUG=<%= @onboot %>
+<% if @netboot %>NETBOOT=<%= @netboot %>
+<% end -%>
+HOTPLUG=<%= @hotplug %>
 TYPE=Ethernet
 <% if @ipaddress %>IPADDR=<%= @ipaddress %>
 <% end -%>
@@ -45,9 +48,19 @@ IPV6INIT=yes
 <% if !@ipv6peerdns %>IPV6_PEERDNS=no
 <% else %>IPV6_PEERDNS=yes
 <% end -%>
+<% else %>
+IPV6INIT=no
 <% end -%>
 <% if @bridge %>BRIDGE=<%= @bridge %>
 <% end -%>
 <% if @linkdelay %>LINKDELAY=<%= @linkdelay %>
 <% end -%>
+<% if @userctl %>USERCTL=<%= USERCTL %>
+<% end -%>
 NM_CONTROLLED=no
+<% if @devicetype %>DEVICETYPE=<%= @devicetype %>
+<% end -%>
+<% if @type %>TYPE=<%= @type %>
+<% end -%>
+<% if @ovs_bridge %>OVS_BRIDGE=<%= ovs_bridge %>
+<% end -%>
