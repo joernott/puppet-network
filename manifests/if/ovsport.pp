@@ -23,6 +23,7 @@
 #   $domain       - optional
 #   $type         - optional - defaults to OVSIntPort
 #   $ovs_bridge   - optional
+#   $netboot      - optional
 #
 # === Actions:
 #
@@ -39,7 +40,8 @@
 #     ipv6init    => true,
 #     ipv6address => '123:4567:89ab:cdef:123:4567:89ab:cdef'
 #     ipv6gateway => '123:4567:89ab:cdef:123:4567:89ab:1' 
-#     ovs_bridge  => 'ovsbr0'
+#     ovs_bridge  => 'ovsbr0',
+#     netboot     => undef
 #   }
 #
 #   network::if::ovsport { 'eth0':
@@ -79,6 +81,7 @@ define network::if::ovsport (
   $linkdelay = undef,
   $type = 'OVSIntPort',
   $ovs_bridge = undef,
+  $netboot = undef,
 ) {
   # Validate our data
   if $ipaddress != undef {
@@ -124,6 +127,7 @@ define network::if::ovsport (
     linkdelay    => $linkdelay,
     type         => $type,
     ovs_bridge   => $ovs_bridge,
-    devicetype   => 'ovs'
+    devicetype   => 'ovs',
+    netboot      => $netboot
   }
 } # define network::if::ovsport
