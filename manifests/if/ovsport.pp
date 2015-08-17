@@ -24,6 +24,7 @@
 #   $type         - optional - defaults to OVSIntPort
 #   $ovs_bridge   - optional
 #   $netboot      - optional
+#   $onboot       - optional
 #
 # === Actions:
 #
@@ -41,7 +42,8 @@
 #     ipv6address => '123:4567:89ab:cdef:123:4567:89ab:cdef'
 #     ipv6gateway => '123:4567:89ab:cdef:123:4567:89ab:1' 
 #     ovs_bridge  => 'ovsbr0',
-#     netboot     => undef
+#     netboot     => undef,
+#     onboot      => 'yes'
 #   }
 #
 #   network::if::ovsport { 'eth0':
@@ -54,7 +56,7 @@
 # === Authors:
 #
 # Mike Arnold <mike@razorsedge.org>
-# Jörn Ott <joern.ott@ott-consult.de>
+# Joern Ott <joern.ott@ott-consult.de>
 #
 # === Copyright:
 #
@@ -62,8 +64,8 @@
 #
 define network::if::ovsport (
   $ensure,
-  $ipaddress =undef,
-  $netmask,
+  $ipaddress = undef,
+  $netmask = undef,
   $gateway = undef,
   $ipv6address = undef,
   $ipv6init = false,
@@ -71,6 +73,7 @@ define network::if::ovsport (
   $macaddress = undef,
   $ipv6autoconf = false,
   $userctl = false,
+  $bootproto = undef,
   $mtu = undef,
   $ethtool_opts = undef,
   $peerdns = false,
@@ -82,6 +85,7 @@ define network::if::ovsport (
   $type = 'OVSIntPort',
   $ovs_bridge = undef,
   $netboot = undef,
+  $onboot = 'yes'
 ) {
   # Validate our data
   if $ipaddress != undef {
@@ -115,7 +119,7 @@ define network::if::ovsport (
     ipv6gateway  => $ipv6gateway,
     ipv6autoconf => $ipv6autoconf,
     macaddress   => $macaddy,
-    bootproto    => 'none',
+    bootproto    => $bootproto,
     userctl      => $userctl,
     mtu          => $mtu,
     ethtool_opts => $ethtool_opts,
@@ -128,6 +132,7 @@ define network::if::ovsport (
     type         => $type,
     ovs_bridge   => $ovs_bridge,
     devicetype   => 'ovs',
-    netboot      => $netboot
+    netboot      => $netboot,
+    onboot       => $onboot,
   }
 } # define network::if::ovsport

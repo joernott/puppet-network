@@ -70,6 +70,8 @@ class network {
 #   $devicetype    - optional
 #   $type          - optional
 #   $ovs_bridge    - optional
+#   $onboot        - optional
+#   $netboot       - optional
 #
 # === Actions:
 #
@@ -107,6 +109,8 @@ define network_if_base (
   $ipv6init = false,
   $ipv6autoconf = false,
   $bootproto = 'none',
+  $onboot = 'yes',
+  $netboot = undef,
   $userctl = false,
   $mtu = undef,
   $dhcp_hostname = undef,
@@ -120,7 +124,7 @@ define network_if_base (
   $domain = undef,
   $bridge = undef,
   $linkdelay = undef,
-  $hotplug = undef,
+  $hotplug = false,
   $devicetype = undef,
   $type = undef,
   $ovs_bridge = undef
@@ -163,11 +167,11 @@ define network_if_base (
     }
     $iftemplate = template('network/ifcfg-alias.erb')
   } else {
-    $onboot = $ensure ? {
-      'up'    => 'yes',
-      'down'  => 'no',
-      default => undef,
-    }
+    #$onboot = $ensure ? {
+    #  'up'    => 'yes',
+    #  'down'  => 'no',
+    #  default => undef,
+    #}
     $iftemplate = template('network/ifcfg-eth.erb')
   }
 
