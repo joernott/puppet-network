@@ -10,7 +10,7 @@ class network::routes(
       $notify = []
   }
   
-  concat{"/etc/sysconfig/network-scripts/route-${interface}";
+  concat{"/etc/sysconfig/network-scripts/route-${interface}":
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
