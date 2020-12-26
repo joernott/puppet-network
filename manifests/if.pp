@@ -46,12 +46,12 @@ define network::if (
   Boolean               $restart       = true,
 ) {
 
-  network_if_base { $title:
+  network::if_base { $title:
     ensure        => $ensure,
     ipaddress     => '',
     netmask       => '',
     gateway       => '',
-    macaddress    => $macaddy,
+    macaddress    => $macaddress,
     manage_hwaddr => $manage_hwaddr,
     bootproto     => 'none',
     ipv6address   => '',

@@ -101,7 +101,7 @@ define network::if_base (
 ) {
 
   assert_private()
-  
+
   include '::network'
 
   $interface = $name

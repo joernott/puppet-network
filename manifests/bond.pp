@@ -40,7 +40,7 @@ define network::bond (
   Boolean           $restart      = true,
 ) {
 
-  network_if_base { $title:
+  network::if_base { $title:
     ensure       => $ensure,
     ipaddress    => '',
     netmask      => '',
