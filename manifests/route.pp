@@ -47,7 +47,7 @@ define network::route (
   Stdlib::IP::Address::Nosubnet $gateway,
   String                        $interface,
 ) {
-  require 'network::routes'
+  require '::network::routes'
   
   $filename = "/etc/sysconfig/network-scripts/route-${interface}"
   $routedef = "\n# ${title}\n${ipaddress}/${prefix} via ${gateway} dev ${interface}\n"
