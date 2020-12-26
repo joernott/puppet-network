@@ -93,7 +93,7 @@ define network::if_base (
   Boolean                                            $check_link_down = false,
   Boolean                                            $flush           = false,
   Optional[Enum['yes','no']]                         $defroute        = undef,
-  String                                             $zone            = undef,
+  Optional[String]                                   $zone            = undef,
   Optional[Integer]                                  $metric          = undef,
   Boolean                                            $promisc         = false,
   Boolean                                            $restart         = true,
