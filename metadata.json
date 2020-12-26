@@ -34,8 +34,11 @@
   ],
   "requirements": [
     {
+      "name": "puppetlabs-concat",
+      "version_requirement": ">=6.8.0 <7.0.0"
+    },
+    {
       "name": "puppet",
       "version_requirement": ">=5.5.0 <8.0.0"
     }
-  ]
 }

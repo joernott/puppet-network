@@ -42,10 +42,10 @@
 #
 define network::route (
 
-  Stdlib::IP::Address                  $ipaddress,
-  Integer[8, 32]                       $prefix,
-  Array[Stdlib::IP::Address::Nosubnet] $gateway,
-  String                               $interface,
+  Stdlib::IP::Address           $ipaddress,
+  Integer[8, 32]                $prefix,
+  Stdlib::IP::Address::Nosubnet $gateway,
+  String                        $interface,
 ) {
   require 'network::routes'
   
