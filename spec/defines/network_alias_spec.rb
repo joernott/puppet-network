@@ -55,6 +55,7 @@ describe 'network::alias', :type => 'define' do
         'TYPE=Ethernet',
         'IPADDR=1.2.3.6',
         'NETMASK=255.255.255.0',
+        'NO_ALIASROUTING=no',
         'NM_CONTROLLED=no',
       ])
     end
@@ -64,11 +65,14 @@ describe 'network::alias', :type => 'define' do
   context 'optional parameters' do
     let(:title) { 'bond3:2' }
     let :params do {
-      :ensure    => 'down',
-      :ipaddress => '33.2.3.127',
-      :netmask   => '255.255.0.0',
-      :gateway   => '33.2.3.1',
-      :userctl   => true,
+      :ensure         => 'down',
+      :ipaddress      => '33.2.3.127',
+      :netmask        => '255.255.0.0',
+      :gateway        => '33.2.3.1',
+      :noaliasrouting => true,
+      :userctl        => true,
+      :metric         => '10',
+      :zone           => 'trusted',
     }
     end
     let(:facts) {{ :osfamily => 'RedHat' }}
@@ -89,7 +93,10 @@ describe 'network::alias', :type => 'define' do
         'IPADDR=33.2.3.127',
         'NETMASK=255.255.0.0',
         'GATEWAY=33.2.3.1',
+        'NO_ALIASROUTING=yes',
         'USERCTL=yes',
+        'ZONE=trusted',
+        'METRIC=10',
         'NM_CONTROLLED=no',
       ])
     end

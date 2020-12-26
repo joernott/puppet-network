@@ -23,6 +23,8 @@
 #   $vlan           - optional - yes|no to enable VLAN kernel module
 #   $ipv6networking - optional - enables / disables IPv6 globally
 #   $nozeroconf     - optional
+#   $restart        - optional - defaults to true
+#   $requestreopen  - optional - defaults to true
 #
 # === Actions:
 #
@@ -44,6 +46,7 @@
 #     vlan           => 'yes',
 #     ipv6networking => true,
 #     nozeroconf     => 'yes',
+#     requestreopen  => false,
 #   }
 #
 # === TODO:
@@ -67,7 +70,9 @@ class network::global (
   $nisdomain      = undef,
   $vlan           = undef,
   $ipv6networking = false,
-  $nozeroconf     = undef
+  $nozeroconf     = undef,
+  $restart        = true,
+  $requestreopen  = true,
 ) {
   # Validate our data
   if $gateway {
@@ -78,6 +83,8 @@ class network::global (
   }
 
   validate_bool($ipv6networking)
+  validate_bool($restart)
+  validate_bool($requestreopen)
 
   # Validate our regular expressions
   if $vlan {
@@ -85,9 +92,31 @@ class network::global (
     validate_re($vlan, $states, '$vlan must be either "yes" or "no".')
   }
 
-  validate_bool($ipv6networking)
-
   include '::network'
+
+  case $::operatingsystem {
+    /^(RedHat|CentOS|OEL|OracleLinux|SLC|Scientific)$/: {
+      case $::operatingsystemrelease {
+        /^[456]/: { $has_systemd = false }
+        default: { $has_systemd = true }
+      }
+    }
+    'Fedora': {
+      case $::operatingsystemrelease {
+        /^(1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17)$/: { $has_systemd = false }
+        default: { $has_systemd = true }
+      }
+    }
+    default: {}
+  }
+
+  if $hostname and $has_systemd {
+    exec { 'hostnamectl set-hostname':
+      command => "hostnamectl set-hostname ${hostname}",
+      unless  => "hostnamectl --static | grep ^${hostname}$",
+      path    => '/bin:/usr/bin',
+    }
+  }
 
   file { 'network.sysconfig':
     ensure  => 'present',
@@ -96,6 +125,11 @@ class network::global (
     group   => 'root',
     path    => '/etc/sysconfig/network',
     content => template('network/network.erb'),
-    notify  => Service['network'],
+  }
+
+  if $restart {
+    File['network.sysconfig'] {
+      notify  => Service['network'],
+    }
   }
 } # class global

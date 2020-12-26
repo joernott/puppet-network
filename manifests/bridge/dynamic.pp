@@ -10,6 +10,7 @@
 #   $stp           - optional - defaults to false
 #   $delay         - optional - defaults to 30
 #   $bridging_opts - optional
+#   $restart       - optional - defaults to true
 #
 # === Actions:
 #
@@ -40,7 +41,8 @@ define network::bridge::dynamic (
   $userctl = false,
   $stp = false,
   $delay = '30',
-  $bridging_opts = undef
+  $bridging_opts = undef,
+  $restart = true,
 ) {
   # Validate our regular expressions
   $states = [ '^up$', '^down$' ]
@@ -48,6 +50,9 @@ define network::bridge::dynamic (
   # Validate booleans
   validate_bool($userctl)
   validate_bool($stp)
+  validate_bool($restart)
+
+  ensure_packages(['bridge-utils'])
 
   include '::network'
 
@@ -71,6 +76,12 @@ define network::bridge::dynamic (
     group   => 'root',
     path    => "/etc/sysconfig/network-scripts/ifcfg-${interface}",
     content => template('network/ifcfg-br.erb'),
-    notify  => Service['network'],
+    require => Package['bridge-utils'],
+  }
+
+  if $restart {
+    File["ifcfg-${interface}"] {
+      notify  => Service['network'],
+    }
   }
 } # define network::bridge::dynamic

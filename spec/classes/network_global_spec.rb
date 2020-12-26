@@ -19,8 +19,10 @@ describe 'network::global', :type => 'class' do
   context 'on a supported operatingsystem, default parameters' do
     let(:params) {{}}
     let :facts do {
-      :osfamily => 'RedHat',
-      :fqdn     => 'localhost.localdomain',
+      :osfamily               => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '7.0',
+      :fqdn                   => 'localhost.localdomain',
     }
     end
     it { should contain_class('network') }
@@ -37,11 +39,44 @@ describe 'network::global', :type => 'class' do
         'NETWORKING=yes',
         'NETWORKING_IPV6=no',
         'HOSTNAME=localhost.localdomain',
+        'RES_OPTIONS="single-request-reopen"',
       ])
     end
+    it { should_not contain_exec('hostnamectl set-hostname') }
+    it { is_expected.to contain_file('network.sysconfig').that_notifies('Service[network]') }
   end
 
-  context 'on a supported operatingsystem, custom parameters' do
+  context 'on a supported operatingsystem, default parameters, restart => false' do
+    let(:params) {{
+      :restart => false
+    }}
+    let :facts do {
+      :osfamily               => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '7.0',
+      :fqdn                   => 'localhost.localdomain',
+    }
+    end
+    it { should contain_class('network') }
+    it { should contain_file('network.sysconfig').with(
+      :ensure => 'present',
+      :mode   => '0644',
+      :owner  => 'root',
+      :group  => 'root',
+      :path   => '/etc/sysconfig/network'
+    )}
+    it 'should contain File[network.sysconfig] with correct contents' do
+      verify_contents(catalogue, 'network.sysconfig', [
+        'NETWORKING=yes',
+        'NETWORKING_IPV6=no',
+        'HOSTNAME=localhost.localdomain',
+      ])
+    end
+    it { should_not contain_exec('hostnamectl set-hostname') }
+    it { is_expected.to_not contain_file('network.sysconfig').that_notifies('Service[network]') }
+  end
+
+  context 'on a supported operatingsystem, custom parameters, systemd' do
     let :params do {
       :hostname   => 'myHostname',
       :gateway    => '1.2.3.4',
@@ -52,8 +87,10 @@ describe 'network::global', :type => 'class' do
     }
     end
     let :facts do {
-      :osfamily => 'RedHat',
-      :fqdn     => 'localhost.localdomain',
+      :osfamily               => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '7.0',
+      :fqdn                   => 'localhost.localdomain',
     }
     end
     it 'should contain File[network.sysconfig] with correct contents' do
@@ -66,8 +103,34 @@ describe 'network::global', :type => 'class' do
         'NISDOMAIN=myNisDomain',
         'VLAN=yes',
         'NOZEROCONF=yes',
+        'RES_OPTIONS="single-request-reopen"',
       ])
     end
+    it { should contain_exec('hostnamectl set-hostname').with(
+      :command => 'hostnamectl set-hostname myHostname',
+      :unless  => 'hostnamectl --static | grep ^myHostname$',
+      :path    => '/bin:/usr/bin'
+    )}
+  end
+
+  context 'on a supported operatingsystem, custom parameters, no systemd' do
+    let :params do {
+      :hostname => 'myHostname',
+    }
+    end
+    let :facts do {
+      :osfamily               => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '6.0',
+      :fqdn                   => 'localhost.localdomain',
+    }
+    end
+    it 'should contain File[network.sysconfig] with correct contents' do
+      verify_contents(catalogue, 'network.sysconfig', [
+        'HOSTNAME=myHostname',
+      ])
+    end
+    it { should_not contain_exec('hostnamectl set-hostname') }
   end
 
   context 'on a supported operatingsystem, bad parameters' do
@@ -113,7 +176,27 @@ describe 'network::global', :type => 'class' do
       end
     end
 
+    context 'manage_hwaddr = foo' do
+      let(:params) {{ :manage_hwaddr  => 'foo' }}
+
+      it 'should fail' do
+        expect {
+          should raise_error(Puppet::Error, /$manage_hwaddr is not a boolean.  It looks to be a String./)
+        }
+      end
+    end
+
   end
+
+    context 'requestreopen = foo' do
+      let(:params) {{ :requestreopen => 'foo' }}
+
+      it 'should fail' do
+        expect { 
+          should raise_error(Puppet::Error, /$requestreopen is not a boolean.  It looks to be a String./)
+        }
+      end
+    end
 
   context 'on a supported operatingsystem, custom parameters' do
     let :params do {
@@ -126,10 +209,13 @@ describe 'network::global', :type => 'class' do
       :ipv6networking => true,
       :ipv6gateway    => '123:4567:89ab:cdef:123:4567:89ab:1',
       :ipv6defaultdev => 'eth3',
+      :requestreopen  => false,
     }
     end
     let :facts do {
       :osfamily => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '6.0',
       :fqdn     => 'localhost.localdomain',
     }
     end

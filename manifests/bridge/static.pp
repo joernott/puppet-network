@@ -5,8 +5,8 @@
 # === Parameters:
 #
 #   $ensure        - required - up|down
-#   $ipaddress     - required
-#   $netmask       - required
+#   $ipaddress     - optional
+#   $netmask       - optional
 #   $gateway       - optional
 #   $ipv6address   - optional
 #   $ipv6gateway   - optional
@@ -20,6 +20,8 @@
 #   $stp           - optional - defaults to false
 #   $delay         - optional - defaults to 30
 #   $bridging_opts - optional
+#   $scope         - optional
+#   $restart       - optional - defaults to true
 #
 # === Actions:
 #
@@ -49,8 +51,8 @@
 #
 define network::bridge::static (
   $ensure,
-  $ipaddress,
-  $netmask,
+  $ipaddress = undef,
+  $netmask = undef,
   $gateway = undef,
   $ipv6address = undef,
   $ipv6gateway = undef,
@@ -64,13 +66,17 @@ define network::bridge::static (
   $domain = undef,
   $stp = false,
   $delay = '30',
-  $bridging_opts = undef
+  $bridging_opts = undef,
+  $scope = undef,
+  $restart = true,
 ) {
   # Validate our regular expressions
   $states = [ '^up$', '^down$' ]
   validate_re($ensure, $states, '$ensure must be either "up" or "down".')
   # Validate our data
-  if ! is_ip_address($ipaddress) { fail("${ipaddress} is not an IP address.") }
+  if $ipaddress {
+    if ! is_ip_address($ipaddress) { fail("${ipaddress} is not an IP address.") }
+  }
   if $ipv6address {
     if ! is_ip_address($ipv6address) { fail("${ipv6address} is not an IPv6 address.") }
   }
@@ -79,6 +85,9 @@ define network::bridge::static (
   validate_bool($stp)
   validate_bool($ipv6init)
   validate_bool($ipv6peerdns)
+  validate_bool($restart)
+
+  ensure_packages(['bridge-utils'])
 
   include '::network'
 
@@ -111,6 +120,12 @@ define network::bridge::static (
     group   => 'root',
     path    => "/etc/sysconfig/network-scripts/ifcfg-${interface}",
     content => template('network/ifcfg-br.erb'),
-    notify  => Service['network'],
+    require => Package['bridge-utils'],
+  }
+
+  if $restart {
+    File["ifcfg-${interface}"] {
+      notify  => Service['network'],
+    }
   }
 } # define network::bridge::static

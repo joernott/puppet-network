@@ -48,12 +48,14 @@ describe 'network::bond::static', :type => 'define' do
     let(:title) { 'bond0' }
     let :params do {
       :ensure    => 'up',
-      :ipaddress => '1.2.3.5',
-      :netmask   => '255.255.255.0',
+#      :ipaddress => '1.2.3.5',
+#      :netmask   => '255.255.255.0',
     }
     end
     let :facts do {
       :osfamily         => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '6.0',
       :macaddress_bond0 => 'fe:fe:fe:aa:aa:aa',
     }
     end
@@ -72,8 +74,8 @@ describe 'network::bond::static', :type => 'define' do
         'ONBOOT=yes',
         'HOTPLUG=yes',
         'TYPE=Ethernet',
-        'IPADDR=1.2.3.5',
-        'NETMASK=255.255.255.0',
+#        'IPADDR=1.2.3.5',
+#        'NETMASK=255.255.255.0',
         'BONDING_OPTS="miimon=100"',
         'PEERDNS=no',
         'NM_CONTROLLED=no',
@@ -143,9 +145,18 @@ describe 'network::bond::static', :type => 'define' do
       :ipv6address  => '123:4567:89ab:cdef:123:4567:89ab:cdef/64',
       :ipv6gateway  => '123:4567:89ab:cdef:123:4567:89ab:1',
       :domain       => 'somedomain.com',
+      :defroute     => 'yes',
+      :metric       => '10',
+      :zone         => 'trusted',
+      :userctl      => true,
     }
     end
-    let(:facts) {{ :osfamily => 'RedHat' }}
+    let :facts do {
+      :osfamily               => 'RedHat',
+      :operatingsystem        => 'RedHat',
+      :operatingsystemrelease => '6.0'
+    }
+    end
     it { should contain_file('ifcfg-bond0').with(
       :ensure => 'present',
       :mode   => '0644',
@@ -171,10 +182,14 @@ describe 'network::bond::static', :type => 'define' do
         'DNS1=3.4.5.6',
         'DNS2=5.6.7.8',
         'DOMAIN="somedomain.com"',
+        'USERCTL=yes',
         'IPV6INIT=yes',
         'IPV6ADDR=123:4567:89ab:cdef:123:4567:89ab:cdef/64',
         'IPV6_DEFAULTGW=123:4567:89ab:cdef:123:4567:89ab:1',
         'IPV6_PEERDNS=yes',
+        'DEFROUTE=yes',
+        'ZONE=trusted',
+        'METRIC=10',
         'NM_CONTROLLED=no',
       ])
     end

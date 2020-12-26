@@ -36,6 +36,7 @@ class network {
     enable     => true,
     hasrestart => true,
     hasstatus  => true,
+    provider   => 'redhat',
   }
 } # class network
 
@@ -49,31 +50,42 @@ class network {
 #
 # === Parameters:
 #
-#   $ensure        - required - up|down
-#   $ipaddress     - required
-#   $netmask       - required
-#   $macaddress    - required
-#   $gateway       - optional
-#   $bootproto     - optional
-#   $userctl       - optional - defaults to false
-#   $mtu           - optional
-#   $dhcp_hostname - optional
-#   $ethtool_opts  - optional
-#   $bonding_opts  - optional
-#   $isalias       - optional
-#   $peerdns       - optional
-#   $dns1          - optional
-#   $dns2          - optional
-#   $domain        - optional
-#   $bridge        - optional
+#   $ensure          - required - up|down
+#   $ipaddress       - optional
+#   $netmask         - optional
+#   $macaddress      - required
+#   $manage_hwaddr   - optional - defaults to true
+#   $gateway         - optional
+#   $noaliasrouting  - optional - defaults to false
+#   $bootproto       - optional
+#   $userctl         - optional - defaults to false
+#   $mtu             - optional
+#   $dhcp_hostname   - optional
+#   $ethtool_opts    - optional
+#   $bonding_opts    - optional
+#   $isalias         - optional
+#   $peerdns         - optional
+#   $dns1            - optional
+#   $dns2            - optional
+#   $domain          - optional
+#   $bridge          - optional
+#   $scope           - optional
+#   $linkdelay       - optional
+#   $check_link_down - optional
+#   $flush           - optional
+#   $zone            - optional
+#   $metric          - optional
+#   $defroute        - optional
+#   $promisc         - optional - defaults to false
+#   $restart         - optional - defaults to true
+#   $arpcheck        - optional - defaults to true
 #
 # === Actions:
 #
-# Performs 'service network restart' after any changes to the ifcfg file.
+# Performs 'service network restart' after any changes to the ifcfg file and $restart parameter is 'true'.
 #
 # === TODO:
 #
-#   METRIC=
 #   HOTPLUG=yes|no
 #   WINDOW=
 #   SCOPE=
@@ -94,36 +106,55 @@ class network {
 #
 define network_if_base (
   $ensure,
-  $ipaddress,
-  $netmask,
   $macaddress,
-  $gateway = undef,
-  $ipv6address = undef,
-  $ipv6gateway = undef,
-  $ipv6init = false,
-  $ipv6autoconf = false,
-  $bootproto = 'none',
-  $userctl = false,
-  $mtu = undef,
-  $dhcp_hostname = undef,
-  $ethtool_opts = undef,
-  $bonding_opts = undef,
-  $isalias = false,
-  $peerdns = false,
-  $ipv6peerdns = false,
-  $dns1 = undef,
-  $dns2 = undef,
-  $domain = undef,
-  $bridge = undef,
-  $linkdelay = undef
+  $ipaddress       = undef,
+  $netmask         = undef,
+  $manage_hwaddr   = true,
+  $gateway         = undef,
+  $noaliasrouting  = false,
+  $ipv6address     = undef,
+  $ipv6gateway     = undef,
+  $ipv6init        = false,
+  $ipv6autoconf    = false,
+  $ipv6secondaries = undef,
+  $bootproto       = 'none',
+  $userctl         = false,
+  $mtu             = undef,
+  $dhcp_hostname   = undef,
+  $ethtool_opts    = undef,
+  $bonding_opts    = undef,
+  $isalias         = false,
+  $peerdns         = false,
+  $ipv6peerdns     = false,
+  $dns1            = undef,
+  $dns2            = undef,
+  $domain          = undef,
+  $bridge          = undef,
+  $linkdelay       = undef,
+  $scope           = undef,
+  $check_link_down = false,
+  $flush           = false,
+  $defroute        = undef,
+  $zone            = undef,
+  $metric          = undef,
+  $promisc         = false,
+  $restart         = true,
+  $arpcheck        = true,
 ) {
   # Validate our booleans
+  validate_bool($noaliasrouting)
   validate_bool($userctl)
   validate_bool($isalias)
   validate_bool($peerdns)
   validate_bool($ipv6init)
   validate_bool($ipv6autoconf)
   validate_bool($ipv6peerdns)
+  validate_bool($check_link_down)
+  validate_bool($manage_hwaddr)
+  validate_bool($flush)
+  validate_bool($promisc)
+  validate_bool($restart)
+  validate_bool($arpcheck)
   # Validate our regular expressions
   $states = [ '^up$', '^down$' ]
   validate_re($ensure, $states, '$ensure must be either "up" or "down".')
@@ -162,6 +193,17 @@ define network_if_base (
     $iftemplate = template('network/ifcfg-eth.erb')
   }
 
+  if $flush {
+    exec { 'network-flush':
+      user        => 'root',
+      command     => "ip addr flush dev ${interface}",
+      refreshonly => true,
+      subscribe   => File["ifcfg-${interface}"],
+      before      => Service['network'],
+      path        => '/sbin:/usr/sbin',
+    }
+  }
+
   file { "ifcfg-${interface}":
     ensure  => 'present',
     mode    => '0644',
@@ -169,6 +211,32 @@ define network_if_base (
     group   => 'root',
     path    => "/etc/sysconfig/network-scripts/ifcfg-${interface}",
     content => $iftemplate,
-    notify  => Service['network'],
+  }
+
+  if $restart {
+    File["ifcfg-${interface}"] {
+      notify  => Service['network'],
+    }
   }
 } # define network_if_base
+
+# == Definition: validate_ip_address
+#
+# This definition can be used to call is_ip_address on an array of ip addresses.
+#
+# === Parameters:
+#
+# None
+#
+# === Actions:
+#
+# Runs is_ip_address on the name of the define and fails if it is not a valid IP address.
+#
+# === Sample Usage:
+#
+# $ips = [ '10.21.30.248', '123:4567:89ab:cdef:123:4567:89ab:cdef' ]
+# validate_ip_address { $ips: }
+#
+define validate_ip_address {
+  if ! is_ip_address($name) { fail("${name} is not an IP(v6) address.") }
+} # define validate_ip_address
