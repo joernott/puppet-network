@@ -41,4 +41,5 @@
       "name": "puppet",
       "version_requirement": ">=5.5.0 <8.0.0"
     }
+  ]
 }
