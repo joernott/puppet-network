@@ -64,7 +64,7 @@
 #
 define network::if_base (
   Enum['up','down']                                  $ensure,
-  Stdlib:MAC                                         $macaddress,
+  Stdlib::MAC                                        $macaddress,
   Optional[Stdlib::IP::Address::V4::Nosubnet]        $ipaddress       = undef,
   Optional[Stdlib::IP::Address::V4::Nosubnet]        $netmask         = undef,
   Boolean                                            $manage_hwaddr   = true,
