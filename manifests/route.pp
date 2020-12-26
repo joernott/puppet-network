@@ -1,4 +1,4 @@
-# == Definition: network::route
+# @summary network::route
 #
 # Configures /etc/sysconfig/networking-scripts/route-$name.
 #
@@ -41,35 +41,20 @@
 # Copyright (C) 2011 Mike Arnold, unless otherwise noted.
 #
 define network::route (
-  $ipaddress,
-  $netmask,
-  $gateway,
-  $restart = true,
+
+  Stdlib::IP::Address           $ipaddress,
+  Integer[8, 32]                $prefix,
+  Stdlib::IP::Address::Nosubnet $gateway,
+  String                        $interface,
 ) {
-  # Validate our arrays
-  validate_array($ipaddress)
-  validate_array($netmask)
-  validate_array($gateway)
-  # Validate our booleans
-  validate_bool($restart)
-
-  include '::network'
-
-  $interface = $name
-
-  file { "route-${interface}":
-    ensure  => 'present',
-    mode    => '0644',
-    owner   => 'root',
-    group   => 'root',
-    path    => "/etc/sysconfig/network-scripts/route-${interface}",
-    content => template('network/route-eth.erb'),
-    before  => File["ifcfg-${interface}"],
+  require '::network::routes'
+  
+  $filename = "/etc/sysconfig/network-scripts/route-${interface}"
+  $routedef = "\n# ${title}\n${ipaddress}/${prefix} via ${gateway} dev ${interface}\n"
+  
+  concat::fragment{"${filename}_${title}":
+    target  => $filename,
+    content => $routedef,
+    order   => '10',
   }
-
-  if $restart {
-    File["route-${interface}"] {
-      notify  => Service['network'],
-    }
-  }
-} # define network::route
+}
