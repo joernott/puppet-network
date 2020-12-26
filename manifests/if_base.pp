@@ -64,7 +64,7 @@
 #
 define network::if_base (
   Enum['up','down']                                  $ensure,
-  Stdlib::MAC                                        $macaddress,
+  Optional[Stdlib::MAC]                              $macaddress      = undef,
   Optional[Stdlib::IP::Address::V4::Nosubnet]        $ipaddress       = undef,
   Optional[Stdlib::IP::Address::V4::Nosubnet]        $netmask         = undef,
   Boolean                                            $manage_hwaddr   = true,
@@ -106,6 +106,14 @@ define network::if_base (
 
   $interface = $name
 
+  # Handle mac address if not provided
+  if $macaddress == undef {
+   $title_clean = regsubst($title,'^(\w+)\.\d+$','\1')
+    $macaddy = $facts["macaddress_${title_clean}"]
+  } else {
+    $macaddy = $macaddress
+  }
+  
   # Deal with the case where $dns2 is non-empty and $dns1 is empty.
   if $dns2 {
     if !$dns1 {

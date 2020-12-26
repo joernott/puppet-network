@@ -41,42 +41,18 @@
 # Copyright (C) 2015 Elyse Salberg, unless otherwise noted.
 #
 define network::if::promisc (
-  $ensure,
-  $macaddress    = undef,
-  $manage_hwaddr = true,
-  $bootproto     = undef,
-  $userctl       = false,
-  $mtu           = undef,
-  $ethtool_opts  = undef,
-  $restart       = true,
-  $promisc       = true,
+  Enum['up','down']     $ensure,
+  Optional[Stdlib::MAC] $macaddress    = undef,
+  Boolean               $manage_hwaddr = true,
+  Boolean               $userctl       = false,
+  Optional[Integer]     $mtu           = undef,
+  Optional[String]      $ethtool_opts  = undef,
+  Boolean               $restart       = true,
+  Boolean               $promisc       = true,
 ) {
   include '::network'
 
   $interface = $name
-
-  if ! is_mac_address($macaddress) {
-    # Strip off any tailing VLAN (ie eth5.90 -> eth5).
-    $title_clean = regsubst($title,'^(\w+)\.\d+$','\1')
-    $macaddy = getvar("::macaddress_${title_clean}")
-  } else {
-    $macaddy = $macaddress
-  }
-
-  # Validate our regular expressions
-  $states = [ '^up$', '^down$' ]
-  validate_re($ensure, $states, '$ensure must be either "up" or "down".')
-
-  # Validate booleans
-  validate_bool($userctl)
-  validate_bool($manage_hwaddr)
-  validate_bool($restart)
-  validate_bool($promisc)
-
-  # Validate our data
-  if ! is_mac_address($macaddy) {
-    fail("${macaddy} is not a MAC address.")
-  }
 
   $onboot = $ensure ? {
     'up'    => 'yes',
@@ -88,16 +64,12 @@ define network::if::promisc (
     case $::operatingsystem {
       /^(RedHat|CentOS|OEL|OracleLinux|SLC|Scientific)$/: {
         case $::operatingsystemmajrelease {
-          '5': {
-            $ifup_source   = "puppet:///modules/${module_name}/promisc/ifup-local-promisc_5"
-            $ifdown_source = "puppet:///modules/${module_name}/promisc/ifdown-local-promisc_5"
-          }
-          '6','7': {
+          '6','7', '8': {
             $ifup_source   = "puppet:///modules/${module_name}/promisc/ifup-local-promisc_6"
             $ifdown_source = "puppet:///modules/${module_name}/promisc/ifdown-local-promisc_6"
           }
           default: {
-            fail('Promiscuous network setup is currently only available for EL 5, 6, and 7.')
+            fail('Promiscuous network setup is currently only available for EL 5, 6, 7 and 8.')
           }
         }
 
@@ -142,12 +114,12 @@ define network::if::promisc (
     }
   }
 
-  network_if_base { $title:
+  network::if_base { $title:
     ensure        => $ensure,
     ipaddress     => '',
     netmask       => '',
     gateway       => '',
-    macaddress    => $macaddy,
+    macaddress    => $macaddress,
     manage_hwaddr => $manage_hwaddr,
     bootproto     => 'none',
     ipv6address   => '',

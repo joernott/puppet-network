@@ -46,44 +46,29 @@
 # Copyright (C) 2011 Mike Arnold, unless otherwise noted.
 #
 define network::if::dynamic (
-  $ensure,
-  $macaddress      = undef,
-  $manage_hwaddr   = true,
-  $bootproto       = 'dhcp',
-  $userctl         = false,
-  $mtu             = undef,
-  $dhcp_hostname   = undef,
-  $ethtool_opts    = undef,
-  $peerdns         = false,
-  $linkdelay       = undef,
-  $check_link_down = false,
-  $defroute        = undef,
-  $zone            = undef,
-  $metric          = undef,
-  $restart         = true,
+  Enum['up','down']          $ensure,
+  Optional[Stdlib::MAC]      $macaddress      = undef,
+  Boolean                    $manage_hwaddr   = true,
+  Enum['none','dhcp']        $bootproto       = 'dhcp',
+  Boolean                    $userctl         = false,
+  Optional[Integer]          $mtu             = undef,
+  Optional[String]           $dhcp_hostname   = undef,
+  Optional[String]           $ethtool_opts    = undef,
+  Boolean                    $peerdns         = false,
+  Optional[Integer]          $linkdelay       = undef,
+  Boolean                    $check_link_down = false,
+  Optional[Enum['yes','no']] $defroute        = undef,
+  Optional[String]           $zone            = undef,
+  Optional[Integer]          $metric          = undef,
+  Boolean                    $restart         = true,
 ) {
-  # Validate our regular expressions
-  $states = [ '^up$', '^down$' ]
-  validate_re($ensure, $states, '$ensure must be either "up" or "down".')
 
-  if ! is_mac_address($macaddress) {
-    # Strip off any tailing VLAN (ie eth5.90 -> eth5).
-    $title_clean = regsubst($title,'^(\w+)\.\d+$','\1')
-    $macaddy = getvar("::macaddress_${title_clean}")
-  } else {
-    $macaddy = $macaddress
-  }
-  # Validate booleans
-  validate_bool($userctl)
-  validate_bool($peerdns)
-  validate_bool($manage_hwaddr)
-
-  network_if_base { $title:
+  network::if_base { $title:
     ensure          => $ensure,
     ipaddress       => '',
     netmask         => '',
     gateway         => '',
-    macaddress      => $macaddy,
+    macaddress      => $macaddress,
     manage_hwaddr   => $manage_hwaddr,
     bootproto       => $bootproto,
     userctl         => $userctl,

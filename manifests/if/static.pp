@@ -56,70 +56,36 @@
 # Copyright (C) 2011 Mike Arnold, unless otherwise noted.
 #
 define network::if::static (
-  $ensure,
-  $ipaddress = undef,
-  $netmask = undef,
-  $gateway = undef,
-  $ipv6address = undef,
-  $ipv6init = false,
-  $ipv6gateway = undef,
-  $macaddress = undef,
-  $manage_hwaddr = true,
-  $ipv6autoconf = false,
-  $userctl = false,
-  $mtu = undef,
-  $ethtool_opts = undef,
-  $peerdns = false,
-  $ipv6peerdns = false,
-  $dns1 = undef,
-  $dns2 = undef,
-  $domain = undef,
-  $linkdelay = undef,
-  $scope = undef,
-  $flush = false,
-  $zone = undef,
-  $defroute = undef,
-  $metric = undef,
-  $restart = true,
-  $arpcheck = true,
+  Enum['up','down']                                  $ensure,
+  Optional[Stdlib::MAC]                              $macaddress      = undef,
+  Optional[Stdlib::IP::Address::V4::Nosubnet]        $ipaddress       = undef,
+  Optional[Stdlib::IP::Address::V4::Nosubnet]        $netmask         = undef,
+  Optional[Stdlib::IP::Address::V4::Nosubnet]        $gateway         = undef,
+  Optional[Stdlib::IP::Address::V6]                  $ipv6address     = undef,
+  Boolean                                            $ipv6init        = false,
+  Optional[Stdlib::IP::Address::V6::Nosubnet]        $ipv6gateway     = undef,
+  Boolean                                            $manage_hwaddr   = true,
+  Boolean                                            $ipv6autoconf    = false,
+  Optional[Array[Stdlib::IP::Address::V6::Nosubnet]] $ipv6secondaries = undef,
+  Boolean                                            $userctl         = false,
+  Optional[Integer]                                  $mtu             = undef,
+  Optional[String]                                   $ethtool_opts    = undef,
+  Boolean                                            $peerdns         = false,
+  Boolean                                            $ipv6peerdns     = false,
+  Optional[String]                                   $dns1            = undef,
+  Optional[String]                                   $dns2            = undef,
+  Optional[String]                                   $domain          = undef,
+  Optional[Integer]                                  $linkdelay       = undef,
+  Optional[String]                                   $scope           = undef,
+  Boolean                                            $flush           = false,
+  Optional[String]                                   $zone            = undef,
+  Optional[Enum['yes','no']]                         $defroute        = undef,
+  Optional[Integer]                                  $metric          = undef,
+  Boolean                                            $restart         = true,
+  Boolean                                            $arpcheck        = true,
 ) {
-  # Validate our data
-  if $ipaddress {
-    if ! is_ip_address($ipaddress) { fail("${ipaddress} is not an IP address.") }
-  }
-  if is_array($ipv6address) {
-    if size($ipv6address) > 0 {
-      validate_ip_address { $ipv6address: }
-      $primary_ipv6address = $ipv6address[0]
-      $secondary_ipv6addresses = delete_at($ipv6address, 0)
-    }
-  } elsif $ipv6address {
-    if ! is_ip_address($ipv6address) { fail("${ipv6address} is not an IPv6 address.") }
-    $primary_ipv6address = $ipv6address
-    $secondary_ipv6addresses = undef
-  } else {
-    $primary_ipv6address = undef
-    $secondary_ipv6addresses = undef
-  }
 
-  if ! is_mac_address($macaddress) {
-    # Strip off any tailing VLAN (ie eth5.90 -> eth5).
-    $title_clean = regsubst($title,'^(\w+)\.\d+$','\1')
-    $macaddy = getvar("::macaddress_${title_clean}")
-  } else {
-    $macaddy = $macaddress
-  }
-  # Validate booleans
-  validate_bool($userctl)
-  validate_bool($ipv6init)
-  validate_bool($ipv6autoconf)
-  validate_bool($peerdns)
-  validate_bool($ipv6peerdns)
-  validate_bool($manage_hwaddr)
-  validate_bool($flush)
-  validate_bool($arpcheck)
-
-  network_if_base { $title:
+  network::if_base { $title:
     ensure          => $ensure,
     ipv6init        => $ipv6init,
     ipaddress       => $ipaddress,
@@ -128,8 +94,8 @@ define network::if::static (
     gateway         => $gateway,
     ipv6gateway     => $ipv6gateway,
     ipv6autoconf    => $ipv6autoconf,
-    ipv6secondaries => $secondary_ipv6addresses,
-    macaddress      => $macaddy,
+    ipv6secondaries => $ipv6secondaries,
+    macaddress      => $macaddress,
     manage_hwaddr   => $manage_hwaddr,
     bootproto       => 'none',
     userctl         => $userctl,
