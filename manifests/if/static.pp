@@ -90,6 +90,8 @@ define network::if::static (
   Boolean                                            $restart            = true,
   Boolean                                            $arpcheck           = true,
   Optional[String]                                   $uuid               = undef,
+  Boolean                                            $browser_only       = false,
+  Optional[String]                                   $proxy_method       = undef,
 ) {
 
   network::if_base { $title:
