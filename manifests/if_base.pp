@@ -112,6 +112,24 @@ define network::if_base (
   assert_private()
 
   include '::network'
+  
+  if $restart {
+    if $facts['os']['family'] == "RedHat" {
+      case $facts['os']['major'] {
+        '6', '7': {
+          $notify = [Service['network']]
+        }
+        'default': {
+          $notify = [Service['NetworkManager']]
+        }
+      }
+    } else {
+      $notify = []
+    }
+  } else {
+    $notify = []
+  }
+  
 
   $interface = $name
 
@@ -171,11 +189,6 @@ define network::if_base (
     group   => 'root',
     path    => "/etc/sysconfig/network-scripts/ifcfg-${interface}",
     content => $iftemplate,
-  }
-
-  if $restart {
-    File["ifcfg-${interface}"] {
-      notify  => Service['network'],
-    }
+    notify  => $notify,
   }
 }
