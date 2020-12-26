@@ -38,4 +38,5 @@ class network {
     hasstatus  => true,
     provider   => 'redhat',
   }
+
 } # class network

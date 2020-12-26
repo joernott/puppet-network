@@ -41,28 +41,20 @@
 # Copyright (C) 2011 Mike Arnold, unless otherwise noted.
 #
 define network::route (
-  Array[Stdlib::IP::Address]           $ipaddress,
-  Array[Stdlib::IP::Address]           $netmask,
+
+  Stdlib::IP::Address                  $ipaddress,
+  Integer[8, 32]                       $prefix,
   Array[Stdlib::IP::Address::Nosubnet] $gateway,
-  Boolean                              $restart = true,
+  String                               $interface,
 ) {
-  include '::network'
-
-  $interface = $name
-
-  file { "route-${interface}":
-    ensure  => 'present',
-    mode    => '0644',
-    owner   => 'root',
-    group   => 'root',
-    path    => "/etc/sysconfig/network-scripts/route-${interface}",
-    content => template('network/route-eth.erb'),
-    before  => File["ifcfg-${interface}"],
-  }
-
-  if $restart {
-    File["route-${interface}"] {
-      notify  => Service['network'],
-    }
+  require 'network::routes'
+  
+  $filename = "/etc/sysconfig/network-scripts/route-${interface}"
+  $routedef = "\n# ${title}\n${ipaddress}/${prefix} via ${gateway} dev ${interface}\n"
+  
+  concat::fragment{"${filename}_${title}":
+    target  => $filename,
+    content => $routedef,
+    order   => '10',
   }
 }
