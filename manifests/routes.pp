@@ -4,7 +4,18 @@ class network::routes(
 ) {
 
   if $restart {
-    $notify = [Service['network']]
+    if $facts['os']['family'] == "RedHat" {
+      case $facts['os']['major'] {
+        '6', '7': {
+          $notify = [Service['network']]
+        }
+        'default': {
+          $notify = [Service['NetworkManager']]
+        }
+      }
+    } else {
+      $notify = []
+    }
   } else {
     $notify = []
   }

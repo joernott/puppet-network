@@ -31,12 +31,25 @@ class network {
     }
   }
 
-  service { 'network':
-    ensure     => 'running',
-    enable     => true,
-    hasrestart => true,
-    hasstatus  => true,
-    provider   => 'redhat',
+  case $facts['os']['major'] {
+    '6', '7': {
+      service { 'network':
+        ensure     => 'running',
+        enable     => true,
+        hasrestart => true,
+        hasstatus  => true,
+        provider   => 'redhat',
+      }
+    }
+    'default': {
+      service { 'NetworkManager':
+        ensure     => 'running',
+        enable     => true,
+        hasrestart => true,
+        hasstatus  => true,
+        provider   => 'redhat',
+      }
+    }
   }
 
 } # class network
