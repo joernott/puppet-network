@@ -1,4 +1,4 @@
-# == Definition: network::route
+# @summary network::route
 #
 # Configures /etc/sysconfig/networking-scripts/route-$name.
 #
@@ -41,18 +41,11 @@
 # Copyright (C) 2011 Mike Arnold, unless otherwise noted.
 #
 define network::route (
-  $ipaddress,
-  $netmask,
-  $gateway,
-  $restart = true,
+  Array[Stdlib::IP::Address]           $ipaddress,
+  Array[Stdlib::IP::Address]           $netmask,
+  Array[Stdlib::IP::Address::Nosubnet] $gateway,
+  Boolean                              $restart = true,
 ) {
-  # Validate our arrays
-  validate_array($ipaddress)
-  validate_array($netmask)
-  validate_array($gateway)
-  # Validate our booleans
-  validate_bool($restart)
-
   include '::network'
 
   $interface = $name
@@ -72,4 +65,4 @@ define network::route (
       notify  => Service['network'],
     }
   }
-} # define network::route
+}
