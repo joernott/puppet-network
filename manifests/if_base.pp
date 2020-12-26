@@ -105,6 +105,8 @@ define network::if_base (
   Boolean                                            $restart            = true,
   Boolean                                            $arpcheck           = true,
   Optional[String]                                   $uuid               = undef,
+  Boolean                                            $browser_only       = false,
+  Optional[String]                                   $proxy_method       = undef,
 ) {
 
   assert_private()
